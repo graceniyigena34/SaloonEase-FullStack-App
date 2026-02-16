@@ -106,6 +106,7 @@ router.post('/signup', validateBody(authSchemas.signupSchema), authCtrl.signup);
  *         description: Invalid code
  */
 router.post('/verify-otp', validateBody(authSchemas.verifyOtpSchema), authCtrl.verifyOtp);
+router.post('/resend-otp', validateBody(authSchemas.resendOtpSchema), authCtrl.resendOtp);
 
 /**
  * @swagger

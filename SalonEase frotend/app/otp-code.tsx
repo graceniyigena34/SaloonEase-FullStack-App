@@ -45,12 +45,8 @@ export default function OtpCodeScreen() {
 
       const response = await authService.verifyOtp(verifyEmail, otpCode);
 
-      Alert.alert('Success', 'Email verified successfully!');
-      if (response.user?.role === 'owner') {
-        router.replace('/admin/dashboard');
-      } else {
-        router.replace('/(tabs)');
-      }
+      Alert.alert('Success', 'Email verified! Please sign in.');
+      router.replace('/');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Invalid OTP code');
     } finally {

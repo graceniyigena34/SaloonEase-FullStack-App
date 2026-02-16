@@ -64,7 +64,7 @@ export const authService = {
     },
 
     sendEmailOtp: async (email: string): Promise<AuthResponse> => {
-        return api.post<AuthResponse>('/auth/send-otp', { email });
+        return api.post<AuthResponse>('/auth/resend-otp', { email });
     },
 
     verifyOtp: async (email: string, otp: string): Promise<AuthResponse> => {

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { authService } from "../src/services/auth";
+
+const { width } = Dimensions.get('window');
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -24,17 +26,10 @@ export default function SignupScreen() {
       Alert.alert('Error', 'Please enter a valid email');
       return false;
     }
-
-    // Strong password criteria
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{8,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      Alert.alert(
-        'Weak Password',
-        'Password must be at least 8 characters long and include: \n• One uppercase letter\n• One lowercase letter\n• One number\n• One special character (@, $, !, %, etc.)'
-      );
+    if (formData.password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return false;
     }
-
     if (formData.password !== formData.confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return false;
@@ -47,19 +42,22 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
+      console.log('Sending signup request:', {
+        name: formData.fullName,
+        email: formData.email,
+        role: formData.role
+      });
       const response = await authService.register({
-        name: formData.fullName.trim(),
-        email: formData.email.trim(),
+        name: formData.fullName,
+        email: formData.email,
         password: formData.password,
         role: formData.role
       });
-
-      Alert.alert('Success', response.message || 'Account created successfully!');
-      router.push({
-        pathname: "/otp-code",
-        params: { email: formData.email.trim() }
-      });
+      console.log('Signup response:', response);
+      Alert.alert('Success', response.message || 'OTP sent to your email!');
+      router.push({ pathname: "/otp-code", params: { email: formData.email } });
     } catch (error: any) {
+      console.error('Signup error:', error);
       Alert.alert('Error', error.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
@@ -67,10 +65,11 @@ export default function SignupScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.back} onPress={() => router.push("/")}>
-        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
-      </TouchableOpacity>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <TouchableOpacity style={styles.back} onPress={() => router.push("/")}>
+          <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+        </TouchableOpacity>
 
       <Text style={styles.title}>Create Account</Text>
       <Text style={styles.subtitle}>Sign up to get started</Text>
@@ -156,15 +155,17 @@ export default function SignupScreen() {
           <Text style={styles.login}>Sign in</Text>
         </TouchableOpacity>
       </View>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8", padding: 24, justifyContent: 'center' },
-  back: { position: 'absolute', top: 60, left: 24 },
-  title: { fontSize: 28, fontWeight: "700", color: "#1A1A1A" },
-  subtitle: { fontSize: 14, color: "#A0A0A0", marginBottom: 30 },
+  scrollContainer: { flexGrow: 1, justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: "#F8F8F8", padding: width * 0.05, paddingTop: 80 },
+  back: { position: 'absolute', top: 60, left: width * 0.05, zIndex: 10 },
+  title: { fontSize: width * 0.07, fontWeight: "700", color: "#1A1A1A" },
+  subtitle: { fontSize: width * 0.035, color: "#A0A0A0", marginBottom: 20 },
   roleContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   roleBtn: {
     flex: 1,
@@ -179,14 +180,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF'
   },
   roleBtnActive: { backgroundColor: '#6C63FF' },
-  roleText: { marginLeft: 8, fontSize: 14, color: '#6C63FF', fontWeight: '600' },
+  roleText: { marginLeft: 8, fontSize: width * 0.035, color: '#6C63FF', fontWeight: '600' },
   roleTextActive: { color: '#FFF' },
   inputBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
-  input: { marginLeft: 10, fontSize: 14, flex: 1, color: "#1A1A1A" },
-  button: { backgroundColor: "#6C63FF", paddingVertical: 16, borderRadius: 16, alignItems: "center", marginBottom: 20 },
+  input: { marginLeft: 10, fontSize: width * 0.035, flex: 1, color: "#1A1A1A" },
+  button: { backgroundColor: "#6C63FF", paddingVertical: 16, borderRadius: 16, alignItems: "center", marginBottom: 20, marginTop: 10 },
   buttonDisabled: { backgroundColor: "#A0A0A0" },
-  buttonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
-  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  footerText: { fontSize: 13, color: "#A0A0A0" },
-  login: { color: "#6C63FF", fontWeight: "600", fontSize: 13 }
+  buttonText: { color: "#FFFFFF", fontSize: width * 0.04, fontWeight: "600" },
+  loginContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  footerText: { fontSize: width * 0.033, color: "#A0A0A0" },
+  login: { color: "#6C63FF", fontWeight: "600", fontSize: width * 0.033 }
 });
