@@ -1,0 +1,74 @@
+### Test Authentication Endpoints
+### Use REST Client extension in VS Code or copy to Thunder Client/Postman
+
+@baseUrl = http://localhost:5001
+@email = test@example.com
+@password = password123
+
+### 1. SIGNUP - Register new user
+POST {{baseUrl}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "{{email}}",
+  "phone": "+1234567890",
+  "password": "{{password}}",
+  "role": "customer"
+}
+
+### 2. VERIFY OTP - Use OTP from signup response or email
+POST {{baseUrl}}/api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "otpEntered": "1234"
+}
+
+### 3. RESEND OTP - If needed
+POST {{baseUrl}}/api/auth/resend-otp
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### 4. LOGIN - After verification
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 5. FORGOT PASSWORD - Request reset code
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{email}}"
+}
+
+### 6. RESET PASSWORD - Use code from email
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "code": "1234",
+  "newPassword": "newpassword123"
+}
+
+### 7. GET CURRENT USER - Use token from login
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 8. SEND OTP TO PHONE
+POST {{baseUrl}}/api/auth/send-otp
+Content-Type: application/json
+
+{
+  "phone": "+1234567890"
+}
