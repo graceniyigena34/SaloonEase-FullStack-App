@@ -75,6 +75,11 @@ async function request<T>(
         return data as T;
     } catch (error: any) {
         console.error(`API Error (${method} ${endpoint}):`, error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
         throw error;
     }
 }

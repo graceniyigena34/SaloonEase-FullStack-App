@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-const SERVICES = [
-  { id: '1', name: 'Regular haircut', price: '$5.00', time: '1023 Booked' },
-  { id: '2', name: 'Undercut', price: '$6.00', time: '756 Booked' },
-  { id: '3', name: 'Classic shaving', price: '$3.12', time: '300 Booked' },
-];
+import { api } from '../../src/services/api';
 
 export default function SelectService() {
   const router = useRouter();
   const { id, name, image, address, selectedDate, time } = useLocalSearchParams();
-  const [selected, setSelected] = useState('1');
+  const [services, setServices] = useState<any[]>([]);
+  const [selected, setSelected] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const data = await api.get(`/services?salon=${id}`);
+      setServices(data);
+      if (data.length > 0) setSelected(data[0]._id);
+    } catch (error) {
+      console.error('Fetch services error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -21,34 +34,40 @@ export default function SelectService() {
         <TouchableOpacity onPress={() => router.back()}><Ionicons name="close" size={24} /></TouchableOpacity>
       </View>
 
-      <ScrollView style={{ padding: 20 }}>
-        {SERVICES.map(service => (
-          <TouchableOpacity 
-            key={service.id} 
-            style={[styles.card, selected === service.id && styles.activeCard]}
-            onPress={() => setSelected(service.id)}
-          >
-            <View style={styles.left}>
-               <View style={styles.imgPlaceholder} />
-               <View>
-                 <Text style={styles.name}>{service.name}</Text>
-                 <Text style={styles.booked}>{service.time}</Text>
-                 <Text style={styles.price}>{service.price}</Text>
-               </View>
-            </View>
-            <View style={[styles.radio, selected === service.id && styles.radioActive]}>
-              {selected === service.id && <Ionicons name="checkmark" color="#FFF" size={12} />}
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#6C63FF" />
+        </View>
+      ) : (
+        <ScrollView style={{ padding: 20 }}>
+          {services.map(service => (
+            <TouchableOpacity 
+              key={service._id} 
+              style={[styles.card, selected === service._id && styles.activeCard]}
+              onPress={() => setSelected(service._id)}
+            >
+              <View style={styles.left}>
+                 <View style={styles.imgPlaceholder} />
+                 <View>
+                   <Text style={styles.name}>{service.name}</Text>
+                   <Text style={styles.booked}>{service.duration} min</Text>
+                   <Text style={styles.price}>${service.price}</Text>
+                 </View>
+              </View>
+              <View style={[styles.radio, selected === service._id && styles.radioActive]}>
+                {selected === service._id && <Ionicons name="checkmark" color="#FFF" size={12} />}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.doneBtn} 
           onPress={() => router.push({
             pathname: '/Appointment/checkout',
-            params: { id, name, image, address, selectedDate, time }
+            params: { id, name, image, address, selectedDate, time, serviceId: selected, salonId: id }
           })}
         >
           <Text style={styles.doneText}>Done</Text>

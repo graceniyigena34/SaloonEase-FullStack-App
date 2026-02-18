@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { bookingService } from '../../src/services/booking';
+import { authService } from '../../src/services/auth';
 
 const PAYMENT_METHODS = [
   { id: 'paypal', label: 'Jenny Wilson', icon: 'paypal', type: 'fa' },
@@ -11,9 +13,50 @@ const PAYMENT_METHODS = [
 ];
 
 export default function CheckoutScreen() {
-  const { name, image, address, selectedDate } = useLocalSearchParams();
+  const { name, image, address, selectedDate, serviceId, salonId } = useLocalSearchParams();
   const router = useRouter();
   const [selectedPayment, setSelectedPayment] = useState('paypal');
+  const [loading, setLoading] = useState(false);
+
+  const handleBooking = async () => {
+    if (!serviceId || !selectedDate) {
+      Alert.alert('Error', 'Missing booking information');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Check if user is logged in
+      const token = await authService.getToken();
+      if (!token) {
+        Alert.alert('Authentication Required', 'Please login to book an appointment', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/') }
+        ]);
+        setLoading(false);
+        return;
+      }
+
+      const bookingData = {
+        service: serviceId as string,
+        date: new Date(selectedDate as string).toISOString(),
+        time: '12:00',
+        notes: `Payment method: ${selectedPayment}`
+      };
+
+      console.log('Creating booking:', bookingData);
+      const result = await bookingService.createBooking(bookingData);
+      console.log('Booking created:', result);
+      Alert.alert('Success', 'Booking created successfully!');
+      router.push("/Appointment/success");
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      const errorMsg = error.message || 'Failed to create booking';
+      Alert.alert('Booking Failed', errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,10 +131,11 @@ export default function CheckoutScreen() {
         
         {/* UPDATED: Navigates to Success Page */}
         <TouchableOpacity 
-          style={styles.payBtn} 
-          onPress={() => router.push("/Appointment/success")}
+          style={[styles.payBtn, loading && { opacity: 0.6 }]} 
+          onPress={handleBooking}
+          disabled={loading}
         >
-          <Text style={styles.payBtnText}>Continue</Text>
+          <Text style={styles.payBtnText}>{loading ? 'Processing...' : 'Continue'}</Text>
           <Text style={styles.payAmount}>$8.12</Text>
         </TouchableOpacity>
       </View>

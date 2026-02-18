@@ -2,7 +2,6 @@ import { api } from './api';
 
 export interface BookingPayload {
     service: string; // Service ID
-    salon: string;   // Salon ID
     date: string;    // ISO Date
     time: string;    // Time string
     notes?: string;
